@@ -1,8 +1,3 @@
-# Variables de entorno necesarias:
-  # TELEGRAM_TOKEN  → 8329164294:AAEddXzyvjUkQIkrUZNRGo4TJ37KFmAsmF8
-  # GROQ_API_KEY    → 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
-"""
-
 import os
 import logging
 from pathlib import Path
