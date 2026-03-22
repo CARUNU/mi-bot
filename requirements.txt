@@ -1,0 +1,7 @@
+python-telegram-bot==21.5
+chromadb==0.5.3
+langchain==0.2.16
+langchain-community==0.2.16
+pypdf==4.3.1
+sentence-transformers==3.0.1
+groq==0.9.0
