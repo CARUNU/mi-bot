@@ -1,3 +1,16 @@
+"""
+Bot de Telegram con RAG (Retrieval-Augmented Generation)
+Responde preguntas basándose ÚNICAMENTE en los PDFs proporcionados.
+
+Requisitos:
+    pip install python-telegram-bot chromadb langchain langchain-community
+    pip install pypdf sentence-transformers groq
+
+Variables de entorno necesarias:
+    TELEGRAM_TOKEN  → Token de tu bot (de @BotFather)
+    GROQ_API_KEY    → API key de groq.com (gratuita)
+"""
+
 import os
 import logging
 from pathlib import Path
@@ -17,8 +30,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ─── Variables de entorno ─────────────────────────────────────────────────────
-TELEGRAM_TOKEN = os.environ.get("8329164294:AAEddXzyvjUkQIkrUZNRGo4TJ37KFmAsmF8")
-GROQ_API_KEY   = os.environ.get("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")
+Variables de entorno necesarias:
+    TELEGRAM_TOKEN  → 8329164294:AAEddXzyvjUkQIkrUZNRGo4TJ37KFmAsmF8
+    GROQ_API_KEY    → gsk_dp0hJzugiPRERSYyyDXHWGdyb3FYROrsB73ag7q7psdqe8q71Gy
 
 # ─── Carpeta donde pones tus PDFs ─────────────────────────────────────────────
 PDF_FOLDER = "manuales"   # Crea esta carpeta y pon tus PDFs dentro
