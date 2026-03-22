@@ -31,8 +31,8 @@ logger = logging.getLogger(__name__)
 
 # ─── Variables de entorno ─────────────────────────────────────────────────────
 Variables de entorno necesarias:
-    TELEGRAM_TOKEN  → 8329164294:AAEddXzyvjUkQIkrUZNRGo4TJ37KFmAsmF8
-    GROQ_API_KEY    → gsk_dp0hJzugiPRERSYyyDXHWGdyb3FYROrsB73ag7q7psdqe8q71Gy
+    TELEGRAM_TOKEN  = ("8329164294:AAEddXzyvjUkQIkrUZNRGo4TJ37KFmAsmF8")
+    GROQ_API_KEY    = ("gsk_dp0hJzugiPRERSYyyDXHWGdyb3FYROrsB73ag7q7psdqe8q71Gy")
 
 # ─── Carpeta donde pones tus PDFs ─────────────────────────────────────────────
 PDF_FOLDER = "manuales"   # Crea esta carpeta y pon tus PDFs dentro
