@@ -167,7 +167,7 @@ PREGUNTA:
             "Content-Type": "application/json"
         },
         json={
-            "model": "meta-llama/llama-3.1-8b-instruct:free",
+            "model": "meta-llama/llama-4-scout:free",
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 1024
         },
