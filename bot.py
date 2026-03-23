@@ -18,7 +18,7 @@ from telegram.ext import Application, MessageHandler, CommandHandler, filters, C
 import chromadb
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from groq import Groq
+import google.generativeai as genai
 
 # ─── Logging ──────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -29,14 +29,15 @@ logger = logging.getLogger(__name__)
 
 # ─── Variables de entorno ─────────────────────────────────────────────────────
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
-GROQ_API_KEY   = os.environ.get("GROQ_API_KEY")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 PORT           = int(os.environ.get("PORT", 8080))
 
 # ─── Carpeta de PDFs ──────────────────────────────────────────────────────────
 PDF_FOLDER = "manuales"
 
 # ─── Clientes ─────────────────────────────────────────────────────────────────
-groq_client   = Groq(api_key=GROQ_API_KEY)
+genai.configure(api_key=GEMINI_API_KEY)
+gemini = genai.GenerativeModel("gemini-1.5-flash")
 chroma_client = chromadb.PersistentClient(path="./chroma_db")
 
 # Embeddings ligeros basados en hash (no requieren modelo de ML)
@@ -105,7 +106,7 @@ def indexar_pdfs():
         logger.warning(f"No hay PDFs en '{PDF_FOLDER}'.")
         return
 
-    splitter = RecursiveCharacterTextSplitter(chunk_size=300, chunk_overlap=50)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=100)
 
     for pdf_path in pdfs:
         pdf_name = pdf_path.stem
@@ -135,7 +136,7 @@ def indexar_pdfs():
 
 
 # ─── Buscar contexto ──────────────────────────────────────────────────────────
-def buscar_contexto(pregunta: str, n_resultados: int = 2) -> str:
+def buscar_contexto(pregunta: str, n_resultados: int = 5) -> str:
     resultados = collection.query(query_texts=[pregunta], n_results=n_resultados)
     if not resultados["documents"] or not resultados["documents"][0]:
         return ""
@@ -155,32 +156,23 @@ def generar_respuesta(pregunta: str, contexto: str) -> str:
             "Por favor, reformula la pregunta o consulta directamente el manual."
         )
 
-    system_prompt = """Eres un asistente que responde preguntas EXCLUSIVAMENTE 
-basándose en los manuales proporcionados.
+    prompt = f"""Eres un asistente que responde preguntas EXCLUSIVAMENTE basándose en los manuales proporcionados.
 
 REGLAS:
 1. Solo usa la información del CONTEXTO dado. No añadas conocimiento externo.
 2. Si la información no está en el contexto, di: "Esta información no está en los manuales disponibles."
 3. Cita siempre la fuente (nombre del manual y página) al final.
 4. Responde en el mismo idioma de la pregunta.
-5. Sé conciso y claro."""
+5. Sé conciso y claro.
 
-    user_message = f"""CONTEXTO DE LOS MANUALES:
+CONTEXTO DE LOS MANUALES:
 {contexto}
 
 PREGUNTA:
 {pregunta}"""
 
-    response = groq_client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user",   "content": user_message}
-        ],
-        max_tokens=1024,
-        temperature=0.1
-    )
-    return response.choices[0].message.content
+    response = gemini.generate_content(prompt)
+    return response.text
 
 
 # ─── Handlers de Telegram ─────────────────────────────────────────────────────
@@ -223,8 +215,8 @@ async def manejar_mensaje(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     if not TELEGRAM_TOKEN:
         raise ValueError("Falta TELEGRAM_TOKEN")
-    if not GROQ_API_KEY:
-        raise ValueError("Falta GROQ_API_KEY")
+    if not GEMINI_API_KEY:
+        raise ValueError("Falta GEMINI_API_KEY")
 
     # Arrancar servidor web en hilo separado
     hilo_web = threading.Thread(target=iniciar_servidor_web, daemon=True)
@@ -239,10 +231,10 @@ def main():
     app.add_handler(CommandHandler("start", comando_inicio))
     app.add_handler(CommandHandler("info",  comando_info))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, manejar_mensaje))
- 
+
     logger.info("Bot iniciado. Esperando mensajes...")
     app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True, close_loop=False)
- 
- 
+
+
 if __name__ == "__main__":
     main()
