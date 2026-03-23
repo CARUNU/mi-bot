@@ -239,13 +239,10 @@ def main():
     app.add_handler(CommandHandler("start", comando_inicio))
     app.add_handler(CommandHandler("info",  comando_info))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, manejar_mensaje))
-
+ 
     logger.info("Bot iniciado. Esperando mensajes...")
-    app.run_polling(
-    allowed_updates=Update.ALL_TYPES,
-    drop_pending_updates=True,
-    close_loop=False
-
-
+    app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True, close_loop=False)
+ 
+ 
 if __name__ == "__main__":
     main()
