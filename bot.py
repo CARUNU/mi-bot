@@ -227,6 +227,9 @@ def main():
     indexar_pdfs()
 
     # Arrancar bot
+    import requests
+    requests.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/deleteWebhook?drop_pending_updates=true")
+
     app = Application.builder().token(TELEGRAM_TOKEN).build()
     app.add_handler(CommandHandler("start", comando_inicio))
     app.add_handler(CommandHandler("info",  comando_info))
