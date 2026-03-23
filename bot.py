@@ -105,7 +105,7 @@ def indexar_pdfs():
         logger.warning(f"No hay PDFs en '{PDF_FOLDER}'.")
         return
 
-    splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=100)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=300, chunk_overlap=50)
 
     for pdf_path in pdfs:
         pdf_name = pdf_path.stem
@@ -135,7 +135,7 @@ def indexar_pdfs():
 
 
 # ─── Buscar contexto ──────────────────────────────────────────────────────────
-def buscar_contexto(pregunta: str, n_resultados: int = 5) -> str:
+def buscar_contexto(pregunta: str, n_resultados: int = 2) -> str:
     resultados = collection.query(query_texts=[pregunta], n_results=n_resultados)
     if not resultados["documents"] or not resultados["documents"][0]:
         return ""
