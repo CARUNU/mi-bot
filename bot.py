@@ -28,8 +28,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ─── Variables de entorno ─────────────────────────────────────────────────────
-TELEGRAM_TOKEN = os.environ.get("8329164294:AAEddXzyvjUkQIkrUZNRGo4TJ37KFmAsmF8")
-GROQ_API_KEY   = os.environ.get("gsk_dp0hJzugiPRERSYyyDXHWGdyb3FYROrsB73ag7q7psdqe8q71Gy")
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
+GROQ_API_KEY   = os.environ.get("GROQ_API_KEY")
 PORT           = int(os.environ.get("PORT", 8080))
 
 # ─── Carpeta de PDFs ──────────────────────────────────────────────────────────
