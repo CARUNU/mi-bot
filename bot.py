@@ -1,25 +1,25 @@
 """
 Bot de Telegram con RAG (Retrieval-Augmented Generation)
 Responde preguntas basándose ÚNICAMENTE en los PDFs proporcionados.
- 
+
 Versión optimizada para Render.com plan gratuito (512 MB RAM).
 Usa embeddings ligeros en lugar de sentence-transformers.
 """
- 
+
 import os
 import logging
 import threading
 import hashlib
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
- 
+
 from telegram import Update
 from telegram.ext import Application, MessageHandler, CommandHandler, filters, ContextTypes
 import chromadb
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from groq import Groq
- 
+
 # ─── Logging ──────────────────────────────────────────────────────────────────
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -34,11 +34,11 @@ PORT           = int(os.environ.get("PORT", 8080))
 
 # ─── Carpeta de PDFs ──────────────────────────────────────────────────────────
 PDF_FOLDER = "manuales"
- 
+
 # ─── Clientes ─────────────────────────────────────────────────────────────────
 groq_client   = Groq(api_key=GROQ_API_KEY)
 chroma_client = chromadb.PersistentClient(path="./chroma_db")
- 
+
 # Embeddings ligeros basados en hash (no requieren modelo de ML)
 # Suficiente para búsqueda por palabras clave en manuales técnicos
 class SimpleEmbeddingFunction:
@@ -49,7 +49,7 @@ class SimpleEmbeddingFunction:
     """
     def __init__(self, dim=384):
         self.dim = dim
- 
+
     def __call__(self, input):
         import math
         results = []
@@ -65,33 +65,33 @@ class SimpleEmbeddingFunction:
             vec = [x / norm for x in vec]
             results.append(vec)
         return results
- 
+
 embedding_fn = SimpleEmbeddingFunction()
- 
+
 collection = chroma_client.get_or_create_collection(
     name="manuales_v2",  # Nombre nuevo para evitar conflictos con colecciones anteriores
     embedding_function=embedding_fn,
     metadata={"hnsw:space": "cosine"}
 )
- 
- 
+
+
 # ─── Servidor web mínimo (necesario para Render Web Service) ──────────────────
 class HealthHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
         self.wfile.write(b"Bot activo")
- 
+
     def log_message(self, format, *args):
         pass
- 
- 
+
+
 def iniciar_servidor_web():
     server = HTTPServer(("0.0.0.0", PORT), HealthHandler)
     logger.info(f"Servidor web arrancado en puerto {PORT}")
     server.serve_forever()
- 
- 
+
+
 # ─── Indexar PDFs ─────────────────────────────────────────────────────────────
 def indexar_pdfs():
     pdf_folder = Path(PDF_FOLDER)
@@ -99,30 +99,30 @@ def indexar_pdfs():
         pdf_folder.mkdir()
         logger.warning(f"Carpeta '{PDF_FOLDER}' creada. Añade tus PDFs y reinicia.")
         return
- 
+
     pdfs = list(pdf_folder.glob("*.pdf"))
     if not pdfs:
         logger.warning(f"No hay PDFs en '{PDF_FOLDER}'.")
         return
- 
+
     splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=100)
- 
+
     for pdf_path in pdfs:
         pdf_name = pdf_path.stem
         existing = collection.get(where={"source": pdf_name})
         if existing["ids"]:
             logger.info(f"'{pdf_name}' ya indexado.")
             continue
- 
+
         logger.info(f"Indexando '{pdf_name}'...")
         loader    = PyPDFLoader(str(pdf_path))
         pages     = loader.load()
         fragments = splitter.split_documents(pages)
- 
+
         ids       = [f"{pdf_name}__{i}" for i in range(len(fragments))]
         texts     = [f.page_content for f in fragments]
         metadatas = [{"source": pdf_name, "page": f.metadata.get("page", 0)} for f in fragments]
- 
+
         for start in range(0, len(texts), 100):
             collection.add(
                 ids=ids[start:start+100],
@@ -130,10 +130,10 @@ def indexar_pdfs():
                 metadatas=metadatas[start:start+100]
             )
         logger.info(f"'{pdf_name}' indexado: {len(fragments)} fragmentos.")
- 
+
     logger.info("Indexación completada.")
- 
- 
+
+
 # ─── Buscar contexto ──────────────────────────────────────────────────────────
 def buscar_contexto(pregunta: str, n_resultados: int = 5) -> str:
     resultados = collection.query(query_texts=[pregunta], n_results=n_resultados)
@@ -145,8 +145,8 @@ def buscar_contexto(pregunta: str, n_resultados: int = 5) -> str:
         pagina = meta.get("page", "?")
         fragmentos.append(f"[{fuente} - pág. {pagina}]\n{doc}")
     return "\n\n---\n\n".join(fragmentos)
- 
- 
+
+
 # ─── Generar respuesta ────────────────────────────────────────────────────────
 def generar_respuesta(pregunta: str, contexto: str) -> str:
     if not contexto:
@@ -154,23 +154,23 @@ def generar_respuesta(pregunta: str, contexto: str) -> str:
             "Lo siento, no he encontrado información sobre eso en los manuales. "
             "Por favor, reformula la pregunta o consulta directamente el manual."
         )
- 
+
     system_prompt = """Eres un asistente que responde preguntas EXCLUSIVAMENTE 
 basándose en los manuales proporcionados.
- 
+
 REGLAS:
 1. Solo usa la información del CONTEXTO dado. No añadas conocimiento externo.
 2. Si la información no está en el contexto, di: "Esta información no está en los manuales disponibles."
 3. Cita siempre la fuente (nombre del manual y página) al final.
 4. Responde en el mismo idioma de la pregunta.
 5. Sé conciso y claro."""
- 
+
     user_message = f"""CONTEXTO DE LOS MANUALES:
 {contexto}
- 
+
 PREGUNTA:
 {pregunta}"""
- 
+
     response = groq_client.chat.completions.create(
         model="llama3-8b-8192",
         messages=[
@@ -181,8 +181,8 @@ PREGUNTA:
         temperature=0.1
     )
     return response.choices[0].message.content
- 
- 
+
+
 # ─── Handlers de Telegram ─────────────────────────────────────────────────────
 async def comando_inicio(update: Update, context: ContextTypes.DEFAULT_TYPE):
     total = collection.count()
@@ -191,8 +191,8 @@ async def comando_inicio(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Tengo {total} fragmentos de tus manuales disponibles.\n\n"
         f"Escríbeme tu pregunta."
     )
- 
- 
+
+
 async def comando_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     total = collection.count()
     todos = collection.get(include=["metadatas"])
@@ -201,8 +201,8 @@ async def comando_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         f"Manuales disponibles ({total} fragmentos):\n\n{lista}"
     )
- 
- 
+
+
 async def manejar_mensaje(update: Update, context: ContextTypes.DEFAULT_TYPE):
     pregunta = update.message.text.strip()
     if not pregunta:
@@ -217,32 +217,32 @@ async def manejar_mensaje(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "Ha ocurrido un error. Por favor, inténtalo de nuevo."
         )
- 
- 
+
+
 # ─── Main ─────────────────────────────────────────────────────────────────────
 def main():
     if not TELEGRAM_TOKEN:
         raise ValueError("Falta TELEGRAM_TOKEN")
     if not GROQ_API_KEY:
         raise ValueError("Falta GROQ_API_KEY")
- 
+
     # Arrancar servidor web en hilo separado
     hilo_web = threading.Thread(target=iniciar_servidor_web, daemon=True)
     hilo_web.start()
- 
+
     # Indexar PDFs
     logger.info("Indexando PDFs...")
     indexar_pdfs()
- 
+
     # Arrancar bot
     app = Application.builder().token(TELEGRAM_TOKEN).build()
     app.add_handler(CommandHandler("start", comando_inicio))
     app.add_handler(CommandHandler("info",  comando_info))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, manejar_mensaje))
- 
+
     logger.info("Bot iniciado. Esperando mensajes...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
- 
- 
+
+
 if __name__ == "__main__":
     main()
