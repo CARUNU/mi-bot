@@ -3,13 +3,14 @@ Bot de Telegram con RAG (Retrieval-Augmented Generation)
 Responde preguntas basándose ÚNICAMENTE en los PDFs proporcionados.
 
 Versión optimizada para Render.com plan gratuito (512 MB RAM).
-Usa embeddings ligeros en lugar de sentence-transformers.
+Usa OpenRouter como proveedor de IA (gratuito).
 """
 
 import os
 import logging
 import threading
 import hashlib
+import requests as req
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 
@@ -18,7 +19,6 @@ from telegram.ext import Application, MessageHandler, CommandHandler, filters, C
 import chromadb
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-import google.generativeai as genai
 
 # ─── Logging ──────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -28,26 +28,18 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ─── Variables de entorno ─────────────────────────────────────────────────────
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-PORT           = int(os.environ.get("PORT", 8080))
+TELEGRAM_TOKEN     = os.environ.get("TELEGRAM_TOKEN")
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
+PORT               = int(os.environ.get("PORT", 8080))
 
 # ─── Carpeta de PDFs ──────────────────────────────────────────────────────────
 PDF_FOLDER = "manuales"
 
-# ─── Clientes ─────────────────────────────────────────────────────────────────
-genai.configure(api_key=GEMINI_API_KEY)
-gemini = genai.GenerativeModel("gemini-2.0-flash")
+# ─── Base de datos vectorial ──────────────────────────────────────────────────
 chroma_client = chromadb.PersistentClient(path="./chroma_db")
 
-# Embeddings ligeros basados en hash (no requieren modelo de ML)
-# Suficiente para búsqueda por palabras clave en manuales técnicos
 class SimpleEmbeddingFunction:
-    """
-    Embedding simple basado en frecuencia de palabras (TF).
-    No requiere ningún modelo externo ni memoria extra.
-    Funciona bien para búsqueda en documentos técnicos.
-    """
+    """Embedding ligero basado en frecuencia de palabras. No requiere modelo externo."""
     def __init__(self, dim=384):
         self.dim = dim
 
@@ -58,19 +50,16 @@ class SimpleEmbeddingFunction:
             vec = [0.0] * self.dim
             words = text.lower().split()
             for word in words:
-                # Distribuir cada palabra en el vector usando su hash
                 idx = int(hashlib.md5(word.encode()).hexdigest(), 16) % self.dim
                 vec[idx] += 1.0
-            # Normalizar el vector
             norm = math.sqrt(sum(x*x for x in vec)) or 1.0
             vec = [x / norm for x in vec]
             results.append(vec)
         return results
 
 embedding_fn = SimpleEmbeddingFunction()
-
-collection = chroma_client.get_or_create_collection(
-    name="manuales_v2",  # Nombre nuevo para evitar conflictos con colecciones anteriores
+collection   = chroma_client.get_or_create_collection(
+    name="manuales_v3",
     embedding_function=embedding_fn,
     metadata={"hnsw:space": "cosine"}
 )
@@ -106,7 +95,7 @@ def indexar_pdfs():
         logger.warning(f"No hay PDFs en '{PDF_FOLDER}'.")
         return
 
-    splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=100)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=300, chunk_overlap=50)
 
     for pdf_path in pdfs:
         pdf_name = pdf_path.stem
@@ -136,7 +125,7 @@ def indexar_pdfs():
 
 
 # ─── Buscar contexto ──────────────────────────────────────────────────────────
-def buscar_contexto(pregunta: str, n_resultados: int = 5) -> str:
+def buscar_contexto(pregunta: str, n_resultados: int = 2) -> str:
     resultados = collection.query(query_texts=[pregunta], n_results=n_resultados)
     if not resultados["documents"] or not resultados["documents"][0]:
         return ""
@@ -148,7 +137,7 @@ def buscar_contexto(pregunta: str, n_resultados: int = 5) -> str:
     return "\n\n---\n\n".join(fragmentos)
 
 
-# ─── Generar respuesta ────────────────────────────────────────────────────────
+# ─── Generar respuesta con OpenRouter ────────────────────────────────────────
 def generar_respuesta(pregunta: str, contexto: str) -> str:
     if not contexto:
         return (
@@ -171,8 +160,21 @@ CONTEXTO DE LOS MANUALES:
 PREGUNTA:
 {pregunta}"""
 
-    response = gemini.generate_content(prompt)
-    return response.text
+    response = req.post(
+        url="https://openrouter.ai/api/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "model": "meta-llama/llama-3.1-8b-instruct:free",
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 1024
+        },
+        timeout=30
+    )
+    response.raise_for_status()
+    return response.json()["choices"][0]["message"]["content"]
 
 
 # ─── Handlers de Telegram ─────────────────────────────────────────────────────
@@ -215,8 +217,11 @@ async def manejar_mensaje(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     if not TELEGRAM_TOKEN:
         raise ValueError("Falta TELEGRAM_TOKEN")
-    if not GEMINI_API_KEY:
-        raise ValueError("Falta GEMINI_API_KEY")
+    if not OPENROUTER_API_KEY:
+        raise ValueError("Falta OPENROUTER_API_KEY")
+
+    # Cancelar sesiones anteriores de Telegram
+    req.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/deleteWebhook?drop_pending_updates=true")
 
     # Arrancar servidor web en hilo separado
     hilo_web = threading.Thread(target=iniciar_servidor_web, daemon=True)
@@ -227,9 +232,6 @@ def main():
     indexar_pdfs()
 
     # Arrancar bot
-    import requests
-    requests.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/deleteWebhook?drop_pending_updates=true")
-
     app = Application.builder().token(TELEGRAM_TOKEN).build()
     app.add_handler(CommandHandler("start", comando_inicio))
     app.add_handler(CommandHandler("info",  comando_info))
