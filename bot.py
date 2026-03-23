@@ -167,7 +167,7 @@ PREGUNTA:
             "Content-Type": "application/json"
         },
         json={
-            "model": "meta-llama/llama-3.3-70b-instruct:free",
+            "model": "google/gemma-3-27b-it:free",
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 1024
         },
