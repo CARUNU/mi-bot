@@ -37,7 +37,7 @@ PDF_FOLDER = "manuales"
 
 # ─── Clientes ─────────────────────────────────────────────────────────────────
 genai.configure(api_key=GEMINI_API_KEY)
-gemini = genai.GenerativeModel("gemini-1.5-flash")
+gemini = genai.GenerativeModel("gemini-2.0-flash")
 chroma_client = chromadb.PersistentClient(path="./chroma_db")
 
 # Embeddings ligeros basados en hash (no requieren modelo de ML)
