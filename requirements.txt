@@ -3,5 +3,4 @@ chromadb==0.4.24
 langchain==0.1.20
 langchain-community==0.0.38
 pypdf
-sentence-transformers
 groq
