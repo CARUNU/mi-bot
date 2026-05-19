@@ -79,7 +79,7 @@ def obtener_coleccion():
         return mejor
     # Si no existe ninguna, crear nueva
     return chroma_client.get_or_create_collection(
-        name="manuales_v3",
+        name="manuales_v5",
         embedding_function=embedding_fn,
         metadata={"hnsw:space": "cosine"}
     )
