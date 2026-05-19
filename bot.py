@@ -230,7 +230,7 @@ def main():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, manejar_mensaje))
 
     logger.info("Bot iniciado. Esperando mensajes...")
-    app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True, close_loop=False)
+    app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True, close_loop=False, pool_timeout=30, connect_timeout=30)
 
 if __name__ == "__main__":
     main()
