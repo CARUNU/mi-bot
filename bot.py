@@ -93,7 +93,11 @@ def obtener_coleccion():
         metadata={"hnsw:space": "cosine"}
     )
 
-collection = obtener_coleccion()
+collection = chroma_client.get_or_create_collection(
+    name="manuales_v4",
+    embedding_function=embedding_fn,
+    metadata={"hnsw:space": "cosine"}
+)
 
 
 # ─── Servidor web minimo (necesario para Render Web Service) ──────────────────
@@ -125,7 +129,7 @@ def indexar_pdfs():
         logger.warning(f"No hay PDFs en '{PDF_FOLDER}'.")
         return
 
-    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=80)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=300, chunk_overlap=60)
 
     for pdf_path in pdfs:
         pdf_name = pdf_path.stem
