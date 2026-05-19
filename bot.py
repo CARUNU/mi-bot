@@ -31,7 +31,6 @@ logger = logging.getLogger(__name__)
 # ─── Variables de entorno ─────────────────────────────────────────────────────
 TELEGRAM_TOKEN     = os.environ.get("TELEGRAM_TOKEN")
 GROQ_API_KEY   = os.environ.get("GROQ_API_KEY")
-OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 PORT               = int(os.environ.get("PORT", 8080))
 
 # ─── Carpeta de PDFs ──────────────────────────────────────────────────────────
