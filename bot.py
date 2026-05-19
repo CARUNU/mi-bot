@@ -218,13 +218,17 @@ async def manejar_mensaje(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     if not TELEGRAM_TOKEN:
         raise ValueError("Falta TELEGRAM_TOKEN")
-    if not OPENROUTER_API_KEY:
-        raise ValueError("Falta OPENROUTER_API_KEY")
+    if not GROQ_API_KEY:
+        raise ValueError("Falta GROQ_API_KEY")
 
-    # Cancelar sesiones anteriores de Telegram
-    req.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/deleteWebhook?drop_pending_updates=true")
-    req.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/getUpdates", json={"offset": -1, "timeout": 0})
-    time.sleep(3)
+    # Forzar cierre de cualquier sesion anterior
+    for _ in range(5):
+        try:
+            req.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/deleteWebhook?drop_pending_updates=true", timeout=5)
+            req.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/getUpdates", json={"offset": -1, "timeout": 0}, timeout=5)
+        except Exception:
+            pass
+        time.sleep(2)
 
     # Arrancar servidor web en hilo separado
     hilo_web = threading.Thread(target=iniciar_servidor_web, daemon=True)
