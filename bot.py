@@ -7,6 +7,7 @@ Usa OpenRouter como proveedor de IA (gratuito).
 """
 
 import os
+import time
 import logging
 import threading
 import hashlib
