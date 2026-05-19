@@ -222,6 +222,8 @@ def main():
 
     # Cancelar sesiones anteriores de Telegram
     req.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/deleteWebhook?drop_pending_updates=true")
+    req.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/getUpdates", json={"offset": -1, "timeout": 0})
+    time.sleep(3)
 
     # Arrancar servidor web en hilo separado
     hilo_web = threading.Thread(target=iniciar_servidor_web, daemon=True)
