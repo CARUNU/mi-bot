@@ -61,7 +61,7 @@ embedding_fn = SemanticEmbeddingFunction()
 
 # Intentar usar la coleccion con mas fragmentos, si no existe usar la actual
 def obtener_coleccion():
-    colecciones_preferidas = ["manuales_v2", "manuales", "manuales_v3"]
+    colecciones_preferidas = ["manuales_v2", "manuales", "manuales_v3", "manuales_v5"]
     mejor = None
     mejor_count = 0
     for nombre in colecciones_preferidas:
@@ -85,7 +85,7 @@ def obtener_coleccion():
     )
 
 collection = chroma_client.get_or_create_collection(
-    name="manuales_v4",
+    name="manuales_v5",
     embedding_function=embedding_fn,
     metadata={"hnsw:space": "cosine"}
 )
@@ -230,15 +230,28 @@ INSTRUCCIONES:
 async def comando_inicio(update: Update, context: ContextTypes.DEFAULT_TYPE):
     total = collection.count()
     await update.message.reply_text(
-        f"Hola! Soy el asistente de Metodologia de Investigacion en Ciencias de la Salud.\n\n"
-        f"Puedo ayudarte con preguntas sobre el temario de la asignatura. "
-        f"Tengo acceso a {total} fragmentos del material.\n\n"
-        f"Algunos ejemplos de lo que puedes preguntarme:\n"
-        f"- Que es el diseno cuasi-experimental?\n"
-        f"- Diferencia entre validez interna y externa\n"
-        f"- Como se calcula el tamano muestral?\n\n"
-        f"Escribe tu pregunta cuando quieras."
+        f"Este chatbot ha sido diseñado para resolver dudas y responder preguntas exclusivamente a partir del contenido de los apuntes y documentos proporcionados.\n\n"
+	    f"Recomendaciones de uso:\n\n"
+        f"- Realice preguntas directas y concretas sobre los contenidos."
+        f"- Cuanto más específica sea la pregunta, más precisa será la respuesta."
+        f"- El sistema responderá únicamente utilizando la información disponible en los documentos cargados."
+        f"- Si una cuestión no aparece en los apuntes, el chatbot puede no disponer de información suficiente para responder correctamente."
+        f"Tengo {total} fragmentos de tus manuales disponibles.\n\n"
+        f"El chatbot puede:\n\n"
+        f"- Explicar conceptos incluidos en los apuntes."
+        f"- Resumir contenidos."
+        f"- Resolver dudas concretas."
+        f"- Comparar conceptos presentes en la documentación."
+        f"- Generar preguntas tipo test para practicar, si se solicita expresamente."
+        f"Ejemplos de preguntas útiles:\n\n"
+        f"Explícame la diferencia entre…"
+        f"Resume el tema 3."
+        f"¿Qué significa… según los apuntes?"
+        f"Genera 10 preguntas tipo test sobre este tema."
+        f"Hazme preguntas de examen sobre…"
+        f"Escribeme tu pregunta.\n\n"
     )
+
 
 async def comando_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     total = collection.count()
