@@ -236,25 +236,25 @@ async def comando_inicio(update: Update, context: ContextTypes.DEFAULT_TYPE):
     total = collection.count()
     await update.message.reply_text(
      f"Este chatbot ha sido diseñado para resolver dudas y responder preguntas exclusivamente a partir del contenido de los apuntes y documentos proporcionados.\n\n"
-	f"Recomendaciones de uso:\n\n"
+	f"Recomendaciones de uso:\n"
 f"-Realice preguntas directas y concretas sobre los contenidos\n"
 f"-Cuanto más específica sea la pregunta, más precisa será la respuesta\n"
 f"-El sistema responderá únicamente utilizando la información disponible en los documentos cargados\n"
-f"-Si una cuestión no aparece en los apuntes, el chatbot puede no disponer de información suficiente para responder correctamente\n"
+f"-Si una cuestión no aparece en los apuntes, el chatbot puede no disponer de información suficiente para responder correctamente\n\n"
         f"Tengo {total} fragmentos de tus manuales disponibles.\n\n"
-        f"El chatbot puede:\n\n"
+        f"El chatbot puede:\n"
 f"-Explicar conceptos incluidos en los apuntes\n"
 f"-Resumir contenidos\n"
 f"-Resolver dudas concretas\n"
 f"-Comparar conceptos presentes en la documentación\n"
-f"-Generar preguntas tipo test para practicar, si se solicita expresamente\n"
-f"Ejemplos de preguntas útiles\n\n"
+f"-Generar preguntas tipo test para practicar, si se solicita expresamente\n\n"
+f"Ejemplos de preguntas útiles\n"
 f"-Explícame la diferencia entre…\n"
 f"-Resume el tema 3\n"
 f"-¿Qué significa… según los apuntes?\n"
 f"-Genera 10 preguntas tipo test sobre este tema\n"
-f"-Hazme preguntas de examen sobre…\n"
-f"Escribeme tu pregunta\n\n"
+f"-Hazme preguntas de examen sobre…\n\n"
+f"Escribeme tu pregunta\n"
     )
 
 async def comando_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
