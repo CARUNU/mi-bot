@@ -186,9 +186,10 @@ INSTRUCCIONES:
 3. Adapta el nivel de la respuesta a un estudiante universitario de ciencias de la salud.
 4. Usa un lenguaje claro y academico, pero accesible.
 5. Si la pregunta es sobre un concepto, explica primero la definicion y luego su aplicacion practica en investigacion en salud.
-6. Cita siempre la fuente (nombre del tema o manual y pagina) al final de la respuesta.
+6. Cita siempre la fuente (nombre del tema, unidad o manual y pagina) al final de la respuesta.
 7. Responde siempre en el mismo idioma en que te hagan la pregunta (español, catalan, ingles, etc.)
-8. Si el alumno hace una pregunta de seguimiento (como "puedes explicarlo mejor" o "y en ese caso..."), ten en cuenta el contexto de la conversacion anterior."""
+8. Recuerda que pueden referirse al material como tema o temas, unidad o unidades o manual o manuales.
+9. Si el alumno hace una pregunta de seguimiento (como "puedes explicarlo mejor" o "y en ese caso..."), ten en cuenta el contexto de la conversacion anterior."""
 
     # Construir mensajes con historial de conversacion
     messages = [{"role": "system", "content": system_prompt}]
@@ -250,11 +251,11 @@ f"-Comparar conceptos presentes en la documentación\n"
 f"-Generar preguntas tipo test para practicar, si se solicita expresamente\n\n"
 f"Ejemplos de preguntas útiles\n"
 f"-Explícame la diferencia entre…\n"
-f"-Resume el tema 3\n"
+f"-Resume la unidad 11\n"
 f"-¿Qué significa… según los apuntes?\n"
-f"-Genera 10 preguntas tipo test sobre este tema\n"
+f"-Genera 10 preguntas tipo test sobre este tem o unidad\n"
 f"-Hazme preguntas de examen sobre…\n\n"
-f"Escribeme tu pregunta\n"
+f"Escribe tu pregunta\n"
     )
 
 async def comando_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
