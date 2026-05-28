@@ -67,15 +67,10 @@ class SimpleEmbeddingFunction:
         return results
 
 embedding_fn = SimpleEmbeddingFunction()
-    def __call__(self, input):
-        embeddings = self.model.encode(input, normalize_embeddings=True)
-        return embeddings.tolist()
-
-embedding_fn = SemanticEmbeddingFunction()
 
 # Intentar usar la coleccion con mas fragmentos, si no existe usar la actual
 def obtener_coleccion():
-    colecciones_preferidas = ["manuales"]
+    colecciones_preferidas = ["manuales_v2", "manuales", "manuales_v3"]
     mejor = None
     mejor_count = 0
     for nombre in colecciones_preferidas:
@@ -93,16 +88,12 @@ def obtener_coleccion():
         return mejor
     # Si no existe ninguna, crear nueva
     return chroma_client.get_or_create_collection(
-        name="manuales_v5",
+        name="manuales_v3",
         embedding_function=embedding_fn,
         metadata={"hnsw:space": "cosine"}
     )
 
-collection = chroma_client.get_or_create_collection(
-    name="manuales_v5",
-    embedding_function=embedding_fn,
-    metadata={"hnsw:space": "cosine"}
-)
+collection = obtener_coleccion()
 
 
 # ─── Servidor web minimo (necesario para Render Web Service) ──────────────────
@@ -134,7 +125,7 @@ def indexar_pdfs():
         logger.warning(f"No hay PDFs en '{PDF_FOLDER}'.")
         return
 
-    splitter = RecursiveCharacterTextSplitter(chunk_size=300, chunk_overlap=60)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=80)
 
     for pdf_path in pdfs:
         pdf_name = pdf_path.stem
@@ -244,28 +235,27 @@ INSTRUCCIONES:
 async def comando_inicio(update: Update, context: ContextTypes.DEFAULT_TYPE):
     total = collection.count()
     await update.message.reply_text(
-        f"Este chatbot ha sido diseñado para resolver dudas y responder preguntas exclusivamente a partir del contenido de los apuntes y documentos proporcionados.\n\n"
-	    f"Recomendaciones de uso:\n\n"
-        f"- Realice preguntas directas y concretas sobre los contenidos."
-        f"- Cuanto más específica sea la pregunta, más precisa será la respuesta."
-        f"- El sistema responderá únicamente utilizando la información disponible en los documentos cargados."
-        f"- Si una cuestión no aparece en los apuntes, el chatbot puede no disponer de información suficiente para responder correctamente."
+     f"Este chatbot ha sido diseñado para resolver dudas y responder preguntas exclusivamente a partir del contenido de los apuntes y documentos proporcionados.\n\n"
+	f"Recomendaciones de uso:
+- Realice preguntas directas y concretas sobre los contenidos.
+- Cuanto más específica sea la pregunta, más precisa será la respuesta.
+- El sistema responderá únicamente utilizando la información disponible en los documentos cargados.
+- Si una cuestión no aparece en los apuntes, el chatbot puede no disponer de información suficiente para responder correctamente."
         f"Tengo {total} fragmentos de tus manuales disponibles.\n\n"
-        f"El chatbot puede:\n\n"
-        f"- Explicar conceptos incluidos en los apuntes."
-        f"- Resumir contenidos."
-        f"- Resolver dudas concretas."
-        f"- Comparar conceptos presentes en la documentación."
-        f"- Generar preguntas tipo test para practicar, si se solicita expresamente."
-        f"Ejemplos de preguntas útiles:\n\n"
-        f"Explícame la diferencia entre…"
-        f"Resume el tema 3."
-        f"¿Qué significa… según los apuntes?"
-        f"Genera 10 preguntas tipo test sobre este tema."
-        f"Hazme preguntas de examen sobre…"
-        f"Escribeme tu pregunta.\n\n"
+        f"El chatbot puede:
+- Explicar conceptos incluidos en los apuntes.
+- Resumir contenidos.
+- Resolver dudas concretas.
+- Comparar conceptos presentes en la documentación.
+- Generar preguntas tipo test para practicar, si se solicita expresamente."
+f"Ejemplos de preguntas útiles
+“Explícame la diferencia entre…”
+“Resume el tema 3.”
+“¿Qué significa… según los apuntes?”
+“Genera 10 preguntas tipo test sobre este tema.”
+“Hazme preguntas de examen sobre…”"
+f"Escribeme tu pregunta."
     )
-
 
 async def comando_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     total = collection.count()
