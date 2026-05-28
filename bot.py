@@ -254,7 +254,7 @@ f"Resume el tema 3"
 f"¿Qué significa… según los apuntes?"
 f"Genera 10 preguntas tipo test sobre este tema"
 f"Hazme preguntas de examen sobre…"
-f"Escribeme tu pregunta."\n\n"
+f"Escribeme tu pregunta\n\n"
     )
 
 async def comando_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
