@@ -236,25 +236,25 @@ async def comando_inicio(update: Update, context: ContextTypes.DEFAULT_TYPE):
     total = collection.count()
     await update.message.reply_text(
      f"Este chatbot ha sido diseñado para resolver dudas y responder preguntas exclusivamente a partir del contenido de los apuntes y documentos proporcionados.\n\n"
-	f"Recomendaciones de uso:
-- Realice preguntas directas y concretas sobre los contenidos.
-- Cuanto más específica sea la pregunta, más precisa será la respuesta.
-- El sistema responderá únicamente utilizando la información disponible en los documentos cargados.
-- Si una cuestión no aparece en los apuntes, el chatbot puede no disponer de información suficiente para responder correctamente."
+	f"Recomendaciones de uso:\n\n"
+f"Realice preguntas directas y concretas sobre los contenidos"
+f"Cuanto más específica sea la pregunta, más precisa será la respuesta"
+f"El sistema responderá únicamente utilizando la información disponible en los documentos cargados"
+f"Si una cuestión no aparece en los apuntes, el chatbot puede no disponer de información suficiente para responder correctamente"
         f"Tengo {total} fragmentos de tus manuales disponibles.\n\n"
-        f"El chatbot puede:
-- Explicar conceptos incluidos en los apuntes.
-- Resumir contenidos.
-- Resolver dudas concretas.
-- Comparar conceptos presentes en la documentación.
-- Generar preguntas tipo test para practicar, si se solicita expresamente."
-f"Ejemplos de preguntas útiles
-“Explícame la diferencia entre…”
-“Resume el tema 3.”
-“¿Qué significa… según los apuntes?”
-“Genera 10 preguntas tipo test sobre este tema.”
-“Hazme preguntas de examen sobre…”"
-f"Escribeme tu pregunta."
+        f"El chatbot puede:\n\n"
+f"Explicar conceptos incluidos en los apuntes"
+f"Resumir contenidos"
+f"Resolver dudas concretas"
+f"Comparar conceptos presentes en la documentación"
+f"Generar preguntas tipo test para practicar, si se solicita expresamente"
+f"Ejemplos de preguntas útiles\n\n"
+f"Explícame la diferencia entre…"
+f"Resume el tema 3"
+f"¿Qué significa… según los apuntes?"
+f"Genera 10 preguntas tipo test sobre este tema"
+f"Hazme preguntas de examen sobre…"
+f"Escribeme tu pregunta."\n\n"
     )
 
 async def comando_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
