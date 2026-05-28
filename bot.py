@@ -20,7 +20,6 @@ import chromadb
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from groq import Groq
-from sentence_transformers import SentenceTransformer
 
 # ─── Logging ──────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -48,11 +47,26 @@ MAX_HISTORIAL = 4
 groq_client   = Groq(api_key=GROQ_API_KEY)
 chroma_client = chromadb.PersistentClient(path="./chroma_db")
 
-class SemanticEmbeddingFunction:
-    """Embedding semantico ligero — entiende significado, no solo palabras exactas."""
-    def __init__(self):
-        self.model = SentenceTransformer("paraphrase-MiniLM-L3-v2")
+class SimpleEmbeddingFunction:
+    """Embedding ligero basado en frecuencia de palabras."""
+    def __init__(self, dim=384):
+        self.dim = dim
 
+    def __call__(self, input):
+        import math
+        results = []
+        for text in input:
+            vec = [0.0] * self.dim
+            words = text.lower().split()
+            for word in words:
+                idx = int(hashlib.md5(word.encode()).hexdigest(), 16) % self.dim
+                vec[idx] += 1.0
+            norm = math.sqrt(sum(x*x for x in vec)) or 1.0
+            vec = [x / norm for x in vec]
+            results.append(vec)
+        return results
+
+embedding_fn = SimpleEmbeddingFunction()
     def __call__(self, input):
         embeddings = self.model.encode(input, normalize_embeddings=True)
         return embeddings.tolist()
