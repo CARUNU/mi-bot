@@ -61,7 +61,7 @@ embedding_fn = SemanticEmbeddingFunction()
 
 # Intentar usar la coleccion con mas fragmentos, si no existe usar la actual
 def obtener_coleccion():
-    colecciones_preferidas = ["manuales_v2", "manuales", "manuales_v3", "manuales_v5"]
+    colecciones_preferidas = ["manuales"]
     mejor = None
     mejor_count = 0
     for nombre in colecciones_preferidas:
